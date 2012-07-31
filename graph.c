@@ -1,6 +1,21 @@
 #include "graph.h"
 #include <stdbool.h>
 
+void print(distance_matrix g)
+{
+	for (int i = 0; i < g.n; i++)
+	{
+		for (int j = 0; j < g.n; j++)
+			printf("%d\t", g.distances[g.n*i + j]);
+		printf("\n");
+	}
+
+	for (int i = 0; i < g.n; i++)
+		printf("%d ", g.k[i]);
+	printf("\n");
+	printf("K: %d, D: %d, S: %d\n", g.max_k, g.diameter, g.sum_of_distances);
+}
+
 
 void floyd_warshall(distance_matrix g) {
 	for (int k = 0; k < g.n; k++) {
@@ -101,6 +116,7 @@ static void init_extended(distance_matrix input, distance_matrix *extended)
 	extended->k[input.n] = 0;
 
 	extended->m = input.m;
+	extended->max_k = input.max_k;
 }
 
 static void add_edges(distance_matrix g, unsigned start)
@@ -111,9 +127,9 @@ static void add_edges(distance_matrix g, unsigned start)
 	if(g.k[g.n - 1] > g.max_k)
 		g.max_k = g.k[g.n - 1];
 	
-	if(g.k[g.n - 1] < MAX_K)
+	if(g.k[g.n - 1] <= MAX_K)
 	{
-		for(unsigned i = start; i < g.n; i++)
+		for(unsigned i = start; i < g.n - 1; i++)
 		{
 			g.k[i]++;
 			if(g.k[i] <= MAX_K)
@@ -139,8 +155,7 @@ static void add_edges(distance_matrix g, unsigned start)
 	g.max_k = old_max_k;
 	
 	if(g.k[g.n - 1] > 0)
-		//print graph here
-		;
+		print(g);
 }
 
 void add_edges_and_transfer_to_queue(distance_matrix input)
