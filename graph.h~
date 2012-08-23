@@ -12,7 +12,10 @@
 //(See main.c)
 #define MAX_K 3
 #define P 500
+<<<<<<< HEAD
 
+=======
+>>>>>>> d0d5a0caaa2292fa78b886bb9c7f465179fd4fbc
 
 typedef struct {
 	int n;
