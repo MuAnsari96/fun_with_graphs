@@ -74,6 +74,20 @@ unsigned graph_sizes[] = {
 	74116, //n = 14, m = 17
 	289254, //n = 15, m = 19
 	1155398, //n = 16, m = 20
+/*		1, //n = 0
+	1, //n = 1
+	1, //n = 2, m = 1
+	1, //n = 3, m = 2 or 3
+	2, //n = 4, m = 3 or 4
+	5, //n = 5, m = 5 or 6
+	18, //n = 6, m = 8
+	79, //n = 7, m = 9 or 10
+	430, //n = 8, m = 11
+	2768, //n = 9, m = 13
+	20346, //n = 10, m = 15
+	167703, //n = 11, m = 17	*/
+
+
 };
 
 static graph_info* receive_graph(int tag, int src, int n, bool canon)
@@ -164,7 +178,7 @@ static void master(int size)
 	//Main loop
 	while(n < 20)
 	{
-		printf("n = %u\n", n);
+		printf("n = %u**************************************\n", n);
 		level *new_level = level_create(n + 1, P, MAX_K);
 		
 		int i, j;
@@ -174,6 +188,8 @@ static void master(int size)
 				{
 					graph_info *g = priority_queue_pull(cur_level->queues[j]);
 					send_graph(SLAVE_INPUT, i, g, false);
+					if(priority_queue_num_elems(cur_level->queues[j]) == 0)
+						print_graph(*g);
 					graph_info_destroy(g);
 					break;
 				}
@@ -187,6 +203,8 @@ static void master(int size)
 				{
 					graph_info *g = priority_queue_pull(cur_level->queues[i]);
 					send_graph(SLAVE_INPUT, status.MPI_SOURCE, g, false);
+					if(priority_queue_num_elems(cur_level->queues[i]) == 0)
+						print_graph(*g);
 					graph_info_destroy(g);
 					break;
 				}
@@ -302,7 +320,7 @@ static void slave(int rank)
 				}
 				level_delete(my_level);
 				my_level = level_create(n + 1, P, MAX_K);
-				printf("n = %d (slave %d)\n", n, rank);
+				//printf("n = %d (slave %d)\n", n, rank);
 				break;
 			case SLAVE_KILL:
 				level_delete(my_level);
