@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <mpi.h>
 #include <assert.h>
+#include <time.h>
 
 #define NEW_LEVEL 0
 #define SLAVE_KILL 1
@@ -165,7 +166,16 @@ static void master(int size)
 {
 	MPI_Status status;
 	FILE *Calc;
-	Calc = fopen("/home/mustafa/Documents/Calcs", "w+");
+	Calc = fopen("/home/mustafa/Documents/Distances", "w");
+	setbuf(Calc, NULL);
+	FILE *Timing;
+	Timing = fopen("/home/mustafa/Documents/Timings", "w");
+	setbuf(Timing, NULL);
+	FILE *Graph;
+	Graph = fopen("/home/mustafa/Documents/Graphs", "w");
+	setbuf(Graph, NULL);
+	if (!Calc || !Timing || !Graph)
+		printf ("\n\n\n Failed to open files \n\n\n");
 	//find n for geng
 	unsigned n = 3;
 	while(graph_sizes[n] <= P)
@@ -178,10 +188,13 @@ static void master(int size)
 	call_geng(n, MAX_K);
 	
 	//Main loop
-	while(n < 128)
+	while(n < 130)
 	{
 		printf("n = %u**************************************\n", n);
 		fprintf(Calc, "n = %u**************************************\n", n);
+		fprintf(Graph, "n = %u**************************************\n", n);
+		fprintf(Timing, "%u\t", n);
+		clock_t begin = clock();
 		level *new_level = level_create(n + 1, P, MAX_K);
 		
 		int i, j;
@@ -192,7 +205,7 @@ static void master(int size)
 					graph_info *g = priority_queue_pull(cur_level->queues[j]);
 					send_graph(SLAVE_INPUT, i, g, false);
 					if(priority_queue_num_elems(cur_level->queues[j]) == 0)
-						print_graph(*g, Calc);
+						print_graph(*g, Calc, Graph);
 					graph_info_destroy(g);
 					break;
 				}
@@ -207,7 +220,7 @@ static void master(int size)
 					graph_info *g = priority_queue_pull(cur_level->queues[i]);
 					send_graph(SLAVE_INPUT, status.MPI_SOURCE, g, false);
 					if(priority_queue_num_elems(cur_level->queues[i]) == 0)
-						print_graph(*g, Calc);
+						print_graph(*g, Calc, Graph);
 					graph_info_destroy(g);
 					break;
 				}
@@ -251,7 +264,9 @@ static void master(int size)
 				}
 			}
 		}
-		
+		clock_t end = clock();
+		float time = (end - begin)/((double)(CLOCKS_PER_SEC));
+		fprintf(Timing, "%f\n", time);
 		level_delete(cur_level);
 		cur_level = new_level;
 	}
@@ -283,10 +298,12 @@ static void master(int size)
 			best_graph = best_graphs[i];
 	}
 	
-	print_graph(*best_graph, Calc);
+	print_graph(*best_graph, Calc, Graph);
 	
 	level_delete(cur_level);
+	fclose(Timing);
 	fclose(Calc);
+	fclose(Graph);
 }
 
 static void slave(int rank)

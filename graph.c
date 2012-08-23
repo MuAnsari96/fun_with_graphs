@@ -2,22 +2,23 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-void print_graph(graph_info g, FILE *Calc)
+void print_graph(graph_info g, FILE *Calc, FILE *Graph)
 {
 
 	unsigned m = (g.n + WORDSIZE - 1) / WORDSIZE;
-	printf("N = %d, M = %d\n", g.n, g.m);	
-	printf("Source	Target\n");	
+	fprintf(Graph, "N = %d, M = %d\n", g.n, g.m);	
+	fprintf(Graph, "Source	Target\n");	
 	for(int i = 0; i < g.n; i++)
 	{
 		for(int j = i + 1; j < g.n; j++)
 		{
 			if(ISELEMENT(GRAPHROW(g.nauty_graph, i, m), j))
-				printf("%d\t%d\n", i, j);	
+				fprintf(Graph, "%d\t%d\n", i, j);	
 	}	}
-	printf("\n");
+	fprintf(Graph, "\n");
 	float avgdist = (float)(g.sum_of_distances)/(g.n*(g.n-1)/2);
-	fprintf(Calc, "K: %d, D: %d, S: %f, M: %d\n\n", g.max_k, g.diameter, avgdist, g.m);
+	//fprintf(Calc, "K: %d, D: %d, S: %f, M: %d\n\n", g.max_k, g.diameter, avgdist, g.m);
+	fprintf(Calc, "%f\n", avgdist);
 }
 
 

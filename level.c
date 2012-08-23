@@ -85,7 +85,7 @@ void level_delete(level *my_level)
 	free(my_level);
 }
 
-void level_empty_and_print(level *my_level)
+/*void level_empty_and_print(level *my_level)
 {
 	printf("For n = %u\n", my_level->n);
 	for(int i = 0; i < my_level->num_m; i++)
@@ -98,7 +98,7 @@ void level_empty_and_print(level *my_level)
 			graph_info_destroy(g);
 		}
 	}
-}
+}*/
 
 bool level_empty(level *my_level)
 {
@@ -320,13 +320,13 @@ void test_extend_graph(void)
 	g.m = 4;
 	g.max_k = 2;
 	
-	print_graph(g);
+	//print_graph(g);
 	
 	level *my_level = level_create(6, 1000, 3);
 	
 	extend_graph_and_add_to_level(g, my_level);
 	
-	level_empty_and_print(my_level);
+	//level_empty_and_print(my_level);
 	
 	level_delete(my_level);
 }
