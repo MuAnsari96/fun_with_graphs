@@ -1,7 +1,8 @@
 #include "graph.h"
 #include <stdbool.h>
+#include <stdio.h>
 
-void print_graph(graph_info g)
+void print_graph(graph_info g, FILE *Calc)
 {
 
 	unsigned m = (g.n + WORDSIZE - 1) / WORDSIZE;
@@ -15,6 +16,8 @@ void print_graph(graph_info g)
 				printf("%d\t%d\n", i, j);	
 	}	}
 	printf("\n");
+	float avgdist = (float)(g.sum_of_distances)/(g.n*(g.n-1)/2);
+	fprintf(Calc, "K: %d, D: %d, S: %f, M: %d\n\n", g.max_k, g.diameter, avgdist, g.m);
 }
 
 

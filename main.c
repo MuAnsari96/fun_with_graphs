@@ -57,7 +57,7 @@ int call_geng(unsigned n, unsigned k)
 //These values need to be regenerated if max-k changes. (k = 3)
 
 unsigned graph_sizes[] = {
-	1, //n = 0
+/*	1, //n = 0
 	1, //n = 1
 	1, //n = 2, m = 1
 	1, //n = 3, m = 2 or 3
@@ -73,8 +73,8 @@ unsigned graph_sizes[] = {
 	20818, //n = 13, m = 16
 	74116, //n = 14, m = 17
 	289254, //n = 15, m = 19
-	1155398, //n = 16, m = 20
-/*		1, //n = 0
+	1155398, //n = 16, m = 20*/
+	1, //n = 0
 	1, //n = 1
 	1, //n = 2, m = 1
 	1, //n = 3, m = 2 or 3
@@ -85,7 +85,7 @@ unsigned graph_sizes[] = {
 	430, //n = 8, m = 11
 	2768, //n = 9, m = 13
 	20346, //n = 10, m = 15
-	167703, //n = 11, m = 17	*/
+	167703, //n = 11, m = 17	
 
 
 };
@@ -164,6 +164,8 @@ bool slaves_done(bool *slave_done, int num_slaves)
 static void master(int size)
 {
 	MPI_Status status;
+	FILE *Calc;
+	Calc = fopen("/home/mustafa/Documents/Calcs", "w+");
 	//find n for geng
 	unsigned n = 3;
 	while(graph_sizes[n] <= P)
@@ -176,9 +178,10 @@ static void master(int size)
 	call_geng(n, MAX_K);
 	
 	//Main loop
-	while(n < 20)
+	while(n < 128)
 	{
 		printf("n = %u**************************************\n", n);
+		fprintf(Calc, "n = %u**************************************\n", n);
 		level *new_level = level_create(n + 1, P, MAX_K);
 		
 		int i, j;
@@ -189,7 +192,7 @@ static void master(int size)
 					graph_info *g = priority_queue_pull(cur_level->queues[j]);
 					send_graph(SLAVE_INPUT, i, g, false);
 					if(priority_queue_num_elems(cur_level->queues[j]) == 0)
-						print_graph(*g);
+						print_graph(*g, Calc);
 					graph_info_destroy(g);
 					break;
 				}
@@ -204,7 +207,7 @@ static void master(int size)
 					graph_info *g = priority_queue_pull(cur_level->queues[i]);
 					send_graph(SLAVE_INPUT, status.MPI_SOURCE, g, false);
 					if(priority_queue_num_elems(cur_level->queues[i]) == 0)
-						print_graph(*g);
+						print_graph(*g, Calc);
 					graph_info_destroy(g);
 					break;
 				}
@@ -280,9 +283,10 @@ static void master(int size)
 			best_graph = best_graphs[i];
 	}
 	
-	print_graph(*best_graph);
+	print_graph(*best_graph, Calc);
 	
 	level_delete(cur_level);
+	fclose(Calc);
 }
 
 static void slave(int rank)

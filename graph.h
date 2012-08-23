@@ -10,7 +10,7 @@
 //#define MAXN 1000
 //Note that if you change this you must change graph_sizes[]
 //(See main.c)
-#define MAX_K 3
+#define MAX_K 4
 #define P 100
 
 
@@ -30,7 +30,7 @@ graph_info *graph_info_from_nauty(graph *g, int n);
 void graph_info_destroy(graph_info *g);
 void floyd_warshall(graph_info g);
 void fill_dist_matrix(graph_info g);
-void print_graph(graph_info g);
+void print_graph(graph_info g, FILE *Calc);
 int calc_sum(graph_info g);
 int calc_diameter(graph_info g);
 int calc_k(graph_info g);
