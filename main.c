@@ -1,4 +1,5 @@
 #include "level.h"
+#include <signal.h>
 #include <stdio.h>
 #include <mpi.h>
 #include <assert.h>
