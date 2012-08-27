@@ -89,7 +89,7 @@ unsigned graph_sizes_4[] = {
 };
 
 unsigned graph_sizes[] = {
-	1, //n = 0
+/*	1, //n = 0
 	1, //n = 1
 	1, //n = 2, m = 1
 	1, //n = 3, m = 2 or 3
@@ -105,8 +105,8 @@ unsigned graph_sizes[] = {
 	20818, //n = 13, m = 16
 	74116, //n = 14, m = 17
 	289254, //n = 15, m = 19
-	1155398, //n = 16, m = 20
-/*		1, //n = 0
+	1155398, //n = 16, m = 20	*/
+	1, //n = 0
 	1, //n = 1
 	1, //n = 2, m = 1
 	1, //n = 3, m = 2 or 3
@@ -117,7 +117,7 @@ unsigned graph_sizes[] = {
 	430, //n = 8, m = 11
 	2768, //n = 9, m = 13
 	20346, //n = 10, m = 15
-	167703, //n = 11, m = 17	*/
+	167703, //n = 11, m = 17	
 
 
 };
@@ -340,7 +340,7 @@ static void master_receive_graphs(int n, int size, level *new_level)
 		}
 	}
 	
-	printf("received %d graphs\n", total_num_graphs);
+	//printf("received %d graphs\n", total_num_graphs);
 	
 	graph_info_type_delete(graph_type);
 }
@@ -359,13 +359,13 @@ static void master(int size)
 	call_geng(n, MAX_K);
 	
 	//Main loop
-	while(n < 20)
+	while(n < 25)
 	{
 		printf("n = %u**************************************\n", n);
 		level *new_level = level_create(n + 1, P, MAX_K);
 		
 		int total_graphs = level_num_graphs(cur_level);
-		printf("total graphs: %d\n", total_graphs);
+		//printf("total graphs: %d\n", total_graphs);
 		
 		int cur_m = 0;
 		
@@ -375,6 +375,8 @@ static void master(int size)
 				if(priority_queue_num_elems(cur_level->queues[j]))
 				{
 					graph_info *g = priority_queue_pull(cur_level->queues[j]);
+					if(priority_queue_num_elems(cur_level->queues[j]) == 0)
+						print_graph(*g);						
 					send_graph(SLAVE_INPUT, i, g, false);
 					graph_info_destroy(g);
 					cur_m = j;
@@ -389,6 +391,8 @@ static void master(int size)
 				MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, SLAVE_REQUEST, MPI_COMM_WORLD, &status);
 				graph_info *g = priority_queue_pull(cur_level->queues[cur_m]);
 				send_graph(SLAVE_INPUT, status.MPI_SOURCE, g, false);
+				if(priority_queue_num_elems(cur_level->queues[cur_m]) == 0)
+					print_graph(*g);	
 				graph_info_destroy(g);
 			}
 			else
@@ -397,7 +401,7 @@ static void master(int size)
 				while(!priority_queue_num_elems(cur_level->queues[cur_m]))
 					cur_m++;
 				
-				if(cur_m % MAX_K == 0)
+				if(cur_m % 1 == 0)
 				{
 					//Collect graphs
 					master_receive_graphs(n + 1, size, new_level);
@@ -406,12 +410,14 @@ static void master(int size)
 								 new_level->num_m * 2,
 								 MPI_INT, i,
 								 MAX_GRAPHS, MPI_COMM_WORLD);
-					printf("master: have %d graphs left\n", level_num_graphs(cur_level));
+					//printf("master: have %d graphs left\n", level_num_graphs(cur_level));
 					for(i = 1; i < size; i++)
 						for(j = cur_m; j < cur_level->num_m; j++)
 							if(priority_queue_num_elems(cur_level->queues[j]))
 							{
 								graph_info *g = priority_queue_pull(cur_level->queues[j]);
+								if(priority_queue_num_elems(cur_level->queues[j]) == 0)
+									print_graph(*g);
 								send_graph(SLAVE_INPUT, i, g, false);
 								graph_info_destroy(g);
 								cur_m = j;

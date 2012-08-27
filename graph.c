@@ -5,7 +5,7 @@ void print_graph(graph_info g)
 {
 
 	unsigned m = (g.n + WORDSIZE - 1) / WORDSIZE;
-	printf("N = %d, M = %d\n", g.n, g.m);	
+/*	printf("N = %d, M = %d\n", g.n, g.m);	
 	printf("Source	Target\n");	
 	for(int i = 0; i < g.n; i++)
 	{
@@ -14,7 +14,9 @@ void print_graph(graph_info g)
 			if(ISELEMENT(GRAPHROW(g.nauty_graph, i, m), j))
 				printf("%d\t%d\n", i, j);	
 	}	}
-	printf("\n");
+	printf("\n");*/
+	float avgdist = (float)(g.sum_of_distances)/(g.n*(g.n-1)/2);
+	printf("%f\n", avgdist);
 }
 
 
