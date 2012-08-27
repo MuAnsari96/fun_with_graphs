@@ -1,6 +1,7 @@
 #include "level.h"
 #include "naututil.h"
 #include <string.h>
+#include <assert.h>
 
 //Hash set implementation/callbacks
 
@@ -60,6 +61,7 @@ level *level_create(unsigned n, unsigned p, unsigned max_k)
 	
 	ret->sets = malloc(ret->num_m * sizeof(hash_set*));
 	ret->queues = malloc(ret->num_m * sizeof(priority_queue*));
+	ret->max_graphs = malloc(ret->num_m * 2 * sizeof(int));
 	
 	for(int i = 0; i < ret->num_m; i++)
 	{
@@ -67,6 +69,7 @@ level *level_create(unsigned n, unsigned p, unsigned max_k)
 									   nauty_delete);
 		ret->queues[i] = priority_queue_create(graph_compare_gt,
 											   graph_delete);
+		ret->max_graphs[2*i] = ret->max_graphs[2*i + 1] = -1;
 	}
 	
 	return ret;
@@ -81,6 +84,7 @@ void level_delete(level *my_level)
 	for(int i = 0; i < my_level->num_m; i++)
 		priority_queue_delete(my_level->queues[i]);
 	free(my_level->queues);
+	free(my_level->max_graphs);
 	
 	free(my_level);
 }
@@ -109,13 +113,22 @@ bool level_empty(level *my_level)
 	return true;
 }
 
+int level_num_graphs(level *my_level)
+{
+	int i, sum = 0;
+	for(i = 0; i < my_level->num_m; i++)
+		sum += priority_queue_num_elems(my_level->queues[i]);
+	return sum;
+}
+
 bool add_graph_to_level(graph_info *new_graph, level *my_level)
 {
 	unsigned i = new_graph->m - my_level->min_m;
 	
-	if(priority_queue_num_elems(my_level->queues[i]) >= my_level->p &&
-	   graph_compare_gt(new_graph,
-						priority_queue_peek(my_level->queues[i])))
+	if(my_level->max_graphs[2*i] != -1 &&
+	   (new_graph->sum_of_distances > my_level->max_graphs[2*i] ||
+		(new_graph->sum_of_distances == my_level->max_graphs[2*i] &&
+		 new_graph->diameter > my_level->max_graphs[2*i + 1])))
 		return false;
 	
 	if(!new_graph->gcan)
@@ -149,6 +162,7 @@ bool add_graph_to_level(graph_info *new_graph, level *my_level)
 //Used for the first level created by geng
 void _add_graph_to_level(graph_info *new_graph, level *my_level)
 {
+	assert(new_graph->n == my_level->n);
 	unsigned i = new_graph->m - my_level->min_m;
 	priority_queue_push(my_level->queues[i], new_graph);
 	if(priority_queue_num_elems(my_level->queues[i]) > my_level->p)
@@ -157,6 +171,13 @@ void _add_graph_to_level(graph_info *new_graph, level *my_level)
 		if(g->gcan)
 			hash_set_remove(my_level->sets[i], g);
 		graph_info_destroy(g);
+	}
+	
+	if (priority_queue_num_elems(my_level->queues[i]) == my_level->p)
+	{
+		graph_info* max_graph = priority_queue_peek(my_level->queues[i]);
+		my_level->max_graphs[2*i] = max_graph->sum_of_distances;
+		my_level->max_graphs[2*i + 1] = max_graph->diameter;
 	}
 }
 
