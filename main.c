@@ -473,19 +473,7 @@ static void master(int size)
 		print_graph(*best_graphs[i], Calc, Graph, Diameter);
 	}
 	
-	
-	/*graph_info *best_graph = NULL;
-	for(int i = 0; i < cur_level->num_m; i++)
-	{
-		if(best_graph == NULL ||
-		   (best_graphs[i] != NULL &&
-			(best_graphs[i]->sum_of_distances < best_graph->sum_of_distances ||
-			 (best_graphs[i]->sum_of_distances == best_graph->sum_of_distances &&
-			  best_graphs[i]->diameter < best_graph->diameter))))
-			best_graph = best_graphs[i];
-	}
-	*/
-	
+
 	
 	level_delete(cur_level);
 	fclose(Timing);
