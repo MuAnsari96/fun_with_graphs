@@ -74,7 +74,7 @@ int call_geng(unsigned n, unsigned k)
 //where 3 is the max degree, and n is the number of nodes.
 //These values need to be regenerated if max-k changes. (k = 3)
 
-unsigned graph_sizes_4[] = {
+unsigned graph_sizes[] = {
 	1,
 	1,
 	1,
@@ -89,8 +89,8 @@ unsigned graph_sizes_4[] = {
 	167703
 };
 
-unsigned graph_sizes[] = {
-/*	1, //n = 0
+unsigned graph_sizes_3[] = {
+	1, //n = 0
 	1, //n = 1
 	1, //n = 2, m = 1
 	1, //n = 3, m = 2 or 3
@@ -106,19 +106,8 @@ unsigned graph_sizes[] = {
 	20818, //n = 13, m = 16
 	74116, //n = 14, m = 17
 	289254, //n = 15, m = 19
-	1155398, //n = 16, m = 20*/
-	1, //n = 0
-	1, //n = 1
-	1, //n = 2, m = 1
-	1, //n = 3, m = 2 or 3
-	2, //n = 4, m = 3 or 4
-	5, //n = 5, m = 5 or 6
-	18, //n = 6, m = 8
-	79, //n = 7, m = 9 or 10
-	430, //n = 8, m = 11
-	2768, //n = 9, m = 13
-	20346, //n = 10, m = 15
-	167703, //n = 11, m = 17	
+	1155398, //n = 16, m = 20
+	
 
 
 };
@@ -352,6 +341,9 @@ static void master(int size)
 	FILE *Calc;
 	Calc = fopen("Distances", "w");
 	setbuf(Calc, NULL);
+	FILE *Diameter;
+	Diameter = fopen("Diameters", "w");
+	setbuf(Diameter, NULL);
 	FILE *Timing;
 	Timing = fopen("Timings", "w");
 	setbuf(Timing, NULL);
@@ -371,10 +363,11 @@ static void master(int size)
 	call_geng(n, MAX_K);
 	
 	//Main loop
-	while(n < 25)
+	while(n < 20)
 	{
 		printf("n = %u**************************************\n", n);
 		fprintf(Calc, "n = %u**************************************\n", n);
+		fprintf(Diameter, "n = %u**************************************\n", n);
 		fprintf(Graph, "n = %u**************************************\n", n);
 		fprintf(Timing, "%u\t", n);
 		clock_t begin = clock();
@@ -393,7 +386,7 @@ static void master(int size)
 					graph_info *g = priority_queue_pull(cur_level->queues[j]);
 					send_graph(SLAVE_INPUT, i, g, false);
 					if(priority_queue_num_elems(cur_level->queues[j]) == 0)
-						print_graph(*g, Calc, Graph);
+						print_graph(*g, Calc, Graph, Diameter);
 					graph_info_destroy(g);
 					cur_m = j;
 					break;
@@ -409,7 +402,7 @@ static void master(int size)
 				graph_info *g = priority_queue_pull(cur_level->queues[cur_m]);
 				send_graph(SLAVE_INPUT, status.MPI_SOURCE, g, false);
 				if(priority_queue_num_elems(cur_level->queues[cur_m]) == 0)
-					print_graph(*g, Calc, Graph);
+					print_graph(*g, Calc, Graph, Diameter);
 				graph_info_destroy(g);
 			}
 			else
@@ -418,7 +411,7 @@ static void master(int size)
 				while(!priority_queue_num_elems(cur_level->queues[cur_m]))
 					cur_m++;
 				
-				if(cur_m % MAX_K == 0)
+				if(cur_m % 1 == 0)
 				{
 					//Collect graphs
 					master_receive_graphs(n + 1, size, new_level);
@@ -435,7 +428,7 @@ static void master(int size)
 								graph_info *g = priority_queue_pull(cur_level->queues[j]);
 								send_graph(SLAVE_INPUT, i, g, false);
 								if(priority_queue_num_elems(cur_level->queues[j]) == 0)
-									print_graph(*g, Calc, Graph);
+									print_graph(*g, Calc, Graph, Diameter);
 								graph_info_destroy(g);
 								cur_m = j;
 								break;
@@ -463,6 +456,11 @@ static void master(int size)
 		MPI_Send(0, 0, MPI_INT, i, SLAVE_KILL, MPI_COMM_WORLD);
 	
 	graph_info *best_graphs[cur_level->num_m];
+	printf("n = %u**************************************\n", cur_level->n);
+	fprintf(Calc, "n = %u**************************************\n", cur_level->n);
+	fprintf(Diameter, "n = %u**************************************\n", cur_level->n);
+	fprintf(Graph, "n = %u**************************************\n", cur_level->n);
+	fprintf(Timing, "%u\t", cur_level->n);
 	
 	for(int i = 0; i < cur_level->num_m; i++)
 	{
@@ -472,9 +470,11 @@ static void master(int size)
 			graph_info_destroy(g);
 		}
 		best_graphs[i] = priority_queue_peek(cur_level->queues[i]);
+		print_graph(*best_graphs[i], Calc, Graph, Diameter);
 	}
 	
-	graph_info *best_graph = NULL;
+	
+	/*graph_info *best_graph = NULL;
 	for(int i = 0; i < cur_level->num_m; i++)
 	{
 		if(best_graph == NULL ||
@@ -484,8 +484,8 @@ static void master(int size)
 			  best_graphs[i]->diameter < best_graph->diameter))))
 			best_graph = best_graphs[i];
 	}
+	*/
 	
-	print_graph(*best_graph, Calc, Graph);
 	
 	level_delete(cur_level);
 	fclose(Timing);

@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-void print_graph(graph_info g, FILE *Calc, FILE *Graph)
+void print_graph(graph_info g, FILE *Calc, FILE *Graph, FILE *Diameter)
 {
 
 	unsigned m = (g.n + WORDSIZE - 1) / WORDSIZE;
@@ -19,6 +19,7 @@ void print_graph(graph_info g, FILE *Calc, FILE *Graph)
 	float avgdist = (float)(g.sum_of_distances)/(g.n*(g.n-1)/2);
 	//fprintf(Calc, "K: %d, D: %d, S: %f, M: %d\n\n", g.max_k, g.diameter, avgdist, g.m);
 	fprintf(Calc, "%f\n", avgdist);
+	fprintf(Diameter, "%d\n", g.diameter);
 }
 
 
