@@ -20,6 +20,10 @@ void print_graph(graph_info g, FILE *Calc, FILE *Graph, FILE *Diameter)
 	//fprintf(Calc, "K: %d, D: %d, S: %f, M: %d\n\n", g.max_k, g.diameter, avgdist, g.m);
 	fprintf(Calc, "%f\n", avgdist);
 	fprintf(Diameter, "%d\n", g.diameter);
+	fflush(Graph);
+	fflush(Calc);
+	fflush(Diameter);
+
 }
 
 

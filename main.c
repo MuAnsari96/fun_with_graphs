@@ -330,7 +330,7 @@ static void master_receive_graphs(int n, int size, level *new_level)
 		}
 	}
 	
-	printf("received %d graphs\n", total_num_graphs);
+	//printf("received %d graphs\n", total_num_graphs);
 	
 	graph_info_type_delete(graph_type);
 }
@@ -340,18 +340,12 @@ static void master(int size)
 	MPI_Status status;
 	FILE *Calc;
 	Calc = fopen("Distances", "w");
-	setbuf(Calc, NULL);
 	FILE *Diameter;
 	Diameter = fopen("Diameters", "w");
-	setbuf(Diameter, NULL);
 	FILE *Timing;
 	Timing = fopen("Timings", "w");
-	setbuf(Timing, NULL);
 	FILE *Graph;
 	Graph = fopen("Graphs", "w");
-	setbuf(Graph, NULL);
-	if (!Calc || !Timing || !Graph)
-		printf ("\n\n\n Failed to open files \n\n\n");
 	//find n for geng
 	unsigned n = 3;
 	while(graph_sizes[n] <= P)
@@ -360,23 +354,26 @@ static void master(int size)
 	//setup cur_level for geng_callback()
 	cur_level = level_create(n, P, MAX_K);
 	
+	FILE *fp = fopen("graphs.txt", "w");
+	
 	call_geng(n, MAX_K);
 	
 	//Main loop
-	while(n < 20)
+	while(n < 30)
 	{
 		printf("n = %u**************************************\n", n);
 		fprintf(Calc, "n = %u**************************************\n", n);
 		fprintf(Diameter, "n = %u**************************************\n", n);
 		fprintf(Graph, "n = %u**************************************\n", n);
-		fprintf(Timing, "%u\t", n);
+		fprintf(Timing, "%u\t", n + 1);
 		clock_t begin = clock();
 		level *new_level = level_create(n + 1, P, MAX_K);
 		
 		int total_graphs = level_num_graphs(cur_level);
-		printf("total graphs: %d\n", total_graphs);
+		//printf("total graphs: %d\n", total_graphs);
 		
 		int cur_m = 0;
+		int min_distances = GRAPH_INFINITY;
 		
 		int i, j;
 		for(i = 1; i < size; i++)
@@ -401,8 +398,13 @@ static void master(int size)
 				MPI_Recv(0, 0, MPI_INT, MPI_ANY_SOURCE, SLAVE_REQUEST, MPI_COMM_WORLD, &status);
 				graph_info *g = priority_queue_pull(cur_level->queues[cur_m]);
 				send_graph(SLAVE_INPUT, status.MPI_SOURCE, g, false);
-				if(priority_queue_num_elems(cur_level->queues[cur_m]) == 0)
+
+				if(!priority_queue_num_elems(cur_level->queues[cur_m]))
+				{
+					if(min_distances > g->sum_of_distances)
+						min_distances = g->sum_of_distances;
 					print_graph(*g, Calc, Graph, Diameter);
+				}
 				graph_info_destroy(g);
 			}
 			else
@@ -411,7 +413,7 @@ static void master(int size)
 				while(!priority_queue_num_elems(cur_level->queues[cur_m]))
 					cur_m++;
 				
-				if(cur_m % 1 == 0)
+				if(cur_m % MAX_K == 0 && level_num_graphs(cur_level) >= size)
 				{
 					//Collect graphs
 					master_receive_graphs(n + 1, size, new_level);
@@ -420,7 +422,7 @@ static void master(int size)
 								 new_level->num_m * 2,
 								 MPI_INT, i,
 								 MAX_GRAPHS, MPI_COMM_WORLD);
-					printf("master: have %d graphs left\n", level_num_graphs(cur_level));
+					//printf("master: have %d graphs left\n", level_num_graphs(cur_level));
 					for(i = 1; i < size; i++)
 						for(j = cur_m; j < cur_level->num_m; j++)
 							if(priority_queue_num_elems(cur_level->queues[j]))
@@ -439,7 +441,7 @@ static void master(int size)
 		clock_t end = clock();
 		float time = (end - begin)/((double)(CLOCKS_PER_SEC));
 		fprintf(Timing, "%f\n", time);
-		
+		fflush(Timing);
 		master_receive_graphs(n + 1, size, new_level);
 		
 		n++;
@@ -460,8 +462,7 @@ static void master(int size)
 	fprintf(Calc, "n = %u**************************************\n", cur_level->n);
 	fprintf(Diameter, "n = %u**************************************\n", cur_level->n);
 	fprintf(Graph, "n = %u**************************************\n", cur_level->n);
-	fprintf(Timing, "%u\t", cur_level->n);
-	
+		
 	for(int i = 0; i < cur_level->num_m; i++)
 	{
 		while(priority_queue_num_elems(cur_level->queues[i]) > 1)
@@ -479,6 +480,9 @@ static void master(int size)
 	fclose(Timing);
 	fclose(Calc);
 	fclose(Graph);
+	fclose(Diameter);
+
+	
 }
 
 static void slave(int rank)
@@ -517,7 +521,7 @@ static void slave(int rank)
 				my_level = level_create(n + 1, P, MAX_K);
 				graph_info_type_delete(graph_type);
 				graph_type = graph_info_type_create(n + 1);
-				printf("n = %d (slave %d)\n", n, rank);
+				//printf("n = %d (slave %d)\n", n, rank);
 				break;
 			case SLAVE_KILL:
 				level_delete(my_level);

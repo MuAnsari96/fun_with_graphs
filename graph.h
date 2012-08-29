@@ -11,7 +11,7 @@
 //Note that if you change this you must change graph_sizes[]
 //(See main.c)
 #define MAX_K 4
-#define P 100
+#define P 10
 
 
 typedef struct {
